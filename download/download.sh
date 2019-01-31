@@ -2,10 +2,20 @@
 
 SAMPLE_RATE=22050
 
+while getopts d: option
+do
+case "${option}"
+in
+d) DIR=${OPTARG};;
+esac
+done
+
+echo $DIR
+
 # fetch_clip(videoID, startTime, endTime)
 fetch_clip() {
-  echo "Fetching $1 ($2 to $3)..."
-  outname="$1_$2"
+  echo "$5: Fetching $1 ($2 to $3)..."
+  outname="$DIR/$5"
   if [ -f "${outname}.wav.gz" ]; then
     echo "Already have it."
     return
@@ -20,14 +30,16 @@ fetch_clip() {
     yes | ffmpeg -loglevel quiet -i "./$outname.wav" -ar $SAMPLE_RATE \
       -ss "$2" -to "$3" "./${outname}_out.wav"
     mv "./${outname}_out.wav" "./$outname.wav"
-    gzip "./$outname.wav"
+#    gzip "./$outname.wav"
   else
     # Give the user a chance to Ctrl+C.
     sleep 1
   fi
 }
 
+COUNTER=0
 grep -E '^[^#]' | while read line
 do
-  fetch_clip $(echo "$line" | sed -E 's/, / /g')
+  fetch_clip $({ echo "$line" ; echo $COUNTER; } | sed -E 's/, / /g')
+  ((COUNTER++))
 done
